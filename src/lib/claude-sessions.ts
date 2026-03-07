@@ -157,29 +157,33 @@ export async function getAllSessions(): Promise<SessionStats[]> {
 }
 
 export function estimateCost(stats: SessionStats): number {
-  // Rough pricing estimates (per 1M tokens)
-  const pricing: Record<string, { input: number; output: number }> = {
-    'claude-3-5-haiku': { input: 0.25, output: 1.25 },
-    'claude-3-5-sonnet': { input: 3, output: 15 },
-    'claude-sonnet-4': { input: 3, output: 15 },
-    'claude-opus-4': { input: 15, output: 75 },
+  // Anthropic pricing per 1M tokens (as of March 2026)
+  const pricing: Record<string, { input: number; output: number; cacheRead: number; cacheWrite: number }> = {
+    'haiku': { input: 0.80, output: 4.00, cacheRead: 0.08, cacheWrite: 1.00 },
+    'sonnet': { input: 3.00, output: 15.00, cacheRead: 0.30, cacheWrite: 3.75 },
+    'opus': { input: 15.00, output: 75.00, cacheRead: 1.50, cacheWrite: 18.75 },
   };
   
-  // Find matching pricing
-  let rates = { input: 3, output: 15 }; // Default to Sonnet
-  for (const [key, value] of Object.entries(pricing)) {
-    if (stats.model.toLowerCase().includes(key.replace('claude-', ''))) {
-      rates = value;
-      break;
-    }
+  // Find matching pricing based on model name
+  let rates = pricing['sonnet']; // Default to Sonnet
+  const modelLower = stats.model.toLowerCase();
+  if (modelLower.includes('haiku')) {
+    rates = pricing['haiku'];
+  } else if (modelLower.includes('opus')) {
+    rates = pricing['opus'];
   }
   
-  // Cache reads are 90% cheaper
-  const cacheRate = 0.1;
-  const effectiveInput = stats.inputTokens - (stats.cacheReadTokens * (1 - cacheRate));
+  // Calculate costs
+  // Note: inputTokens from the API includes all input tokens
+  // cacheReadTokens are the tokens read from cache (cheaper)
+  // cacheWriteTokens are tokens written to cache (more expensive)
+  // Regular input = inputTokens - cacheReadTokens - cacheWriteTokens
+  const regularInput = Math.max(0, stats.inputTokens - stats.cacheReadTokens - stats.cacheWriteTokens);
   
-  const inputCost = (effectiveInput / 1_000_000) * rates.input;
+  const regularInputCost = (regularInput / 1_000_000) * rates.input;
+  const cacheReadCost = (stats.cacheReadTokens / 1_000_000) * rates.cacheRead;
+  const cacheWriteCost = (stats.cacheWriteTokens / 1_000_000) * rates.cacheWrite;
   const outputCost = (stats.outputTokens / 1_000_000) * rates.output;
   
-  return inputCost + outputCost;
+  return regularInputCost + cacheReadCost + cacheWriteCost + outputCost;
 }
