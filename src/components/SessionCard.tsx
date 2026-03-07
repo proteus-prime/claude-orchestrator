@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 interface Session {
   sessionId: string;
   project: string;
@@ -43,7 +45,8 @@ export function SessionCard({ session }: { session: Session }) {
   };
   
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+    <Link href={`/session/${session.sessionId}`} className="block">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700 hover:border-blue-400 transition-colors cursor-pointer">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${statusColor}`} />
@@ -95,5 +98,6 @@ export function SessionCard({ session }: { session: Session }) {
         <span className="font-medium text-sm">${session.estimatedCost.toFixed(4)}</span>
       </div>
     </div>
+    </Link>
   );
 }
