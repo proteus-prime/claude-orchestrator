@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { SessionCard } from '@/components/SessionCard';
 import { StatsBar } from '@/components/StatsBar';
+import { OrchestratorStatusBar } from '@/components/OrchestratorStatusBar';
 
 interface Session {
   sessionId: string;
@@ -25,6 +26,18 @@ interface Stats {
   totalCost: number;
 }
 
+interface OrchestratorStatus {
+  status: 'ok' | 'error';
+  timestamp: string;
+  orchestrator: {
+    projectsTracked: number;
+    totalSessions: number;
+    activeSessions: number;
+    totalTokens: number;
+    totalCost: number;
+  };
+}
+
 export default function Home() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [stats, setStats] = useState<Stats>({
@@ -33,17 +46,25 @@ export default function Home() {
     totalTokens: 0,
     totalCost: 0,
   });
+  const [orchestratorStatus, setOrchestratorStatus] = useState<OrchestratorStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'running' | 'completed'>('all');
 
   const fetchSessions = async () => {
     try {
-      const res = await fetch('/api/sessions');
-      if (!res.ok) throw new Error('Failed to fetch');
-      const data = await res.json();
+      const [sessionsRes, statusRes] = await Promise.all([
+        fetch('/api/sessions'),
+        fetch('/api/orchestrator/status'),
+      ]);
+      if (!sessionsRes.ok) throw new Error('Failed to fetch');
+      const data = await sessionsRes.json();
       setSessions(data.sessions);
       setStats(data.stats);
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        setOrchestratorStatus(statusData);
+      }
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error');
@@ -88,6 +109,8 @@ export default function Home() {
             {error}
           </div>
         )}
+
+        <OrchestratorStatusBar orchestratorStatus={orchestratorStatus} />
 
         <StatsBar stats={stats} />
 
