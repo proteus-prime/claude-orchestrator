@@ -101,43 +101,23 @@ export default function Home() {
   });
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              🦀 Claude Orchestrator
+              Dashboard
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Real-time Claude Code session monitoring
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/activity"
-              className="px-3 py-1.5 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
-            >
-              Activity
-            </Link>
-            <Link
-              href="/workers"
-              className="px-3 py-1.5 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
-            >
-              Workers
-            </Link>
-            <Link
-              href="/pipeline"
-              className="px-3 py-1.5 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
-            >
-              Pipeline
-            </Link>
-            <button
-              onClick={fetchSessions}
-              className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-            >
-              Refresh
-            </button>
-          </div>
+          <button
+            onClick={fetchSessions}
+            className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+          >
+            Refresh
+          </button>
         </div>
 
         {error && (
@@ -235,6 +215,6 @@ export default function Home() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
