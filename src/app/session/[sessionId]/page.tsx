@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 
 interface Message {
   type: 'user' | 'assistant' | 'tool_result' | 'tool_call';
@@ -95,9 +94,6 @@ export default function SessionDetailPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
         <div className="max-w-4xl mx-auto">
           <p className="text-red-500">{error || 'Session not found'}</p>
-          <Link href="/" className="text-blue-600 hover:underline mt-4 block">
-            ← Back to dashboard
-          </Link>
         </div>
       </div>
     );
@@ -106,10 +102,7 @@ export default function SessionDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-4xl mx-auto">
-        <Link href="/" className="text-blue-600 hover:underline mb-4 block">
-          ← Back to dashboard
-        </Link>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-xl font-bold">Session Detail</h1>
