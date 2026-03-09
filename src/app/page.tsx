@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { SessionCard } from '@/components/SessionCard';
 import { StatsBar } from '@/components/StatsBar';
 
@@ -75,12 +76,20 @@ export default function Home() {
               Real-time Claude Code session monitoring
             </p>
           </div>
-          <button
-            onClick={fetchSessions}
-            className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-          >
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/pipeline"
+              className="px-3 py-1.5 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
+            >
+              Pipeline
+            </Link>
+            <button
+              onClick={fetchSessions}
+              className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
         {error && (
