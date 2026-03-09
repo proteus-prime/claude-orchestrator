@@ -56,12 +56,41 @@ export async function GET(
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
     let model = 'unknown';
-    
+    let linearIssue: { issueNumber: number; issueId: string; title: string; url: string } | undefined;
+
+    // Try to extract Linear issue from project directory name first
+    const dirMatch = projectName.match(/feature-(\d+)-/);
+    if (dirMatch) {
+      const issueNumber = parseInt(dirMatch[1], 10);
+      const issueId = `THE-${issueNumber}`;
+      linearIssue = { issueNumber, issueId, title: '', url: `https://linear.app/theraai/issue/${issueId}` };
+    }
+
     for (const line of lines) {
       try {
         const msg = JSON.parse(line);
-        
+
         if (msg.type === 'user' && msg.message?.content) {
+          const content = typeof msg.message.content === 'string' ? msg.message.content : '';
+          // Extract Linear issue title from first user message if not yet found with title
+          if (linearIssue && !linearIssue.title) {
+            const titleMatch = content.match(/You are working on Linear issue #\d+:\s*(.+)/);
+            if (titleMatch) {
+              linearIssue = { ...linearIssue, title: titleMatch[1].trim() };
+            }
+          } else if (!linearIssue) {
+            const issueMatch = content.match(/You are working on Linear issue #(\d+):\s*(.+)/);
+            if (issueMatch) {
+              const issueNumber = parseInt(issueMatch[1], 10);
+              const issueId = `THE-${issueNumber}`;
+              linearIssue = {
+                issueNumber,
+                issueId,
+                title: issueMatch[2].trim(),
+                url: `https://linear.app/theraai/issue/${issueId}`,
+              };
+            }
+          }
           messages.push({
             type: 'user',
             timestamp: msg.timestamp || '',
@@ -131,6 +160,7 @@ export async function GET(
       },
       messageCount: messages.length,
       messages,
+      linearIssue: linearIssue || null,
     });
   } catch (error) {
     console.error('Error fetching session:', error);
