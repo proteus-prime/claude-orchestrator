@@ -99,6 +99,12 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2">
             <Link
+              href="/workers"
+              className="px-3 py-1.5 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
+            >
+              Workers
+            </Link>
+            <Link
               href="/pipeline"
               className="px-3 py-1.5 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
             >
