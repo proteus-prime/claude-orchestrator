@@ -94,9 +94,9 @@ export function StatsBar({ stats }: { stats: Stats }) {
         value={stats.totalSessions.toString()}
         subtext={`${stats.activeSessions} currently running`}
         barPercent={100}
-        accentClass="bg-indigo-500"
-        barClass="bg-indigo-500"
-        iconColorClass="text-indigo-400"
+        accentClass="bg-cyan-500"
+        barClass="bg-cyan-500"
+        iconColorClass="text-cyan-400"
       />
       <StatCard
         icon={Zap}
@@ -114,9 +114,9 @@ export function StatsBar({ stats }: { stats: Stats }) {
         value={`$${stats.totalCost.toFixed(2)}`}
         subtext="USD estimated total"
         barPercent={Math.min(100, (stats.totalCost / 5) * 100)}
-        accentClass="bg-violet-500"
-        barClass="bg-violet-500"
-        iconColorClass="text-violet-400"
+        accentClass="bg-teal-500"
+        barClass="bg-teal-500"
+        iconColorClass="text-teal-400"
       />
     </div>
   );

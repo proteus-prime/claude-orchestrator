@@ -123,7 +123,7 @@ export default function Home() {
           <button
             onClick={() => fetchSessions(true)}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 transition-all disabled:opacity-60"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/30 transition-all disabled:opacity-60"
           >
             <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
             Refresh
@@ -151,9 +151,9 @@ export default function Home() {
           <div className="mb-6 glass-card p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-                <GitPullRequest size={14} className="text-violet-400" />
+                <GitPullRequest size={14} className="text-teal-400" />
                 Recent Pull Requests
-                <span className="px-1.5 py-0.5 bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded-full text-xs font-medium">
+                <span className="px-1.5 py-0.5 bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-full text-xs font-medium">
                   {prs.length}
                 </span>
               </h2>
@@ -171,13 +171,13 @@ export default function Home() {
                   href={pr.prUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-violet-500/10 border border-violet-500/20 rounded-lg text-xs hover:bg-violet-500/20 transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-teal-500/10 border border-teal-500/20 rounded-lg text-xs hover:bg-teal-500/20 transition-colors"
                   title={pr.project}
                 >
-                  <span className="font-semibold text-violet-300">
+                  <span className="font-semibold text-teal-300">
                     {pr.repo.split('/')[1] ?? pr.repo}
                   </span>
-                  <span className="text-violet-400">
+                  <span className="text-teal-400">
                     #{pr.prNumber}
                   </span>
                   {pr.createdAt && (

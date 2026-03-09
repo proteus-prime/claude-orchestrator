@@ -75,7 +75,7 @@ export function SessionCard({ session }: { session: Session }) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={e => e.stopPropagation()}
-          className="inline-flex items-center gap-1 mb-2 px-2 py-0.5 bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded text-xs hover:bg-violet-500/30 transition-colors"
+          className="inline-flex items-center gap-1 mb-2 px-2 py-0.5 bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded text-xs hover:bg-teal-500/30 transition-colors"
           title={session.linearIssue.title || session.linearIssue.issueId}
         >
           <span className="font-medium">{session.linearIssue.issueId}</span>
@@ -86,7 +86,7 @@ export function SessionCard({ session }: { session: Session }) {
       )}
 
       <div className="flex items-center gap-2 mb-3">
-        <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded text-xs">
+        <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded text-xs">
           {modelShort}
         </span>
         <span className="text-xs text-slate-500">

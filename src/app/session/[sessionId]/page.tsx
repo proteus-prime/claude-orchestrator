@@ -111,7 +111,7 @@ export default function SessionDetailPage() {
                 href={session.linearIssue.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-md text-sm hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200 rounded-md text-sm hover:bg-cyan-200 dark:hover:bg-cyan-800 transition-colors"
               >
                 <span className="font-semibold">{session.linearIssue.issueId}</span>
                 {session.linearIssue.title && (

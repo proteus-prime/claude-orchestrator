@@ -41,9 +41,9 @@ const EVENT_CONFIG: Record<
   message_received: {
     label: 'Response',
     icon: '←',
-    textColor: 'text-purple-600 dark:text-purple-400',
-    dotColor: 'bg-purple-500',
-    activeBg: 'bg-purple-500',
+    textColor: 'text-cyan-600 dark:text-cyan-400',
+    dotColor: 'bg-cyan-500',
+    activeBg: 'bg-cyan-500',
   },
   tool_invoked: {
     label: 'Tool Used',
