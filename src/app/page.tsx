@@ -105,6 +105,12 @@ export default function Home() {
               Activity
             </Link>
             <Link
+              href="/workers"
+              className="px-3 py-1.5 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
+            >
+              Workers
+            </Link>
+            <Link
               href="/pipeline"
               className="px-3 py-1.5 bg-gray-700 text-white rounded hover:bg-gray-600 text-sm"
             >
