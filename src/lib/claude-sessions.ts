@@ -20,6 +20,7 @@ export interface SessionStats {
   cacheWriteTokens: number;
   toolCalls: string[];
   messageCount: number;
+  startTime: Date | null;
   lastActivity: Date | null;
   filePath: string;
   linearIssue?: LinearIssueInfo;
@@ -122,6 +123,7 @@ async function parseSessionFile(filePath: string, sessionId: string, project: st
   let model = 'unknown';
   const toolCalls: string[] = [];
   let messageCount = 0;
+  let startTime: Date | null = null;
   let lastActivity: Date | null = null;
   let linearIssue: LinearIssueInfo | undefined;
 
@@ -134,6 +136,7 @@ async function parseSessionFile(filePath: string, sessionId: string, project: st
       messageCount++;
       
       if (msg.timestamp) {
+        if (!startTime) startTime = new Date(msg.timestamp);
         lastActivity = new Date(msg.timestamp);
       }
       
@@ -194,6 +197,7 @@ async function parseSessionFile(filePath: string, sessionId: string, project: st
     cacheWriteTokens,
     toolCalls,
     messageCount,
+    startTime,
     lastActivity,
     filePath,
     linearIssue,

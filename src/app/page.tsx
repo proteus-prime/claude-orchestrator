@@ -7,6 +7,7 @@ import { SessionCard } from '@/components/SessionCard';
 import { StatsBar } from '@/components/StatsBar';
 import { OrchestratorStatusBar } from '@/components/OrchestratorStatusBar';
 import { DashboardCharts } from '@/components/DashboardCharts';
+import { MetricsSection, type MetricsData } from '@/components/MetricsSection';
 
 interface Session {
   sessionId: string;
@@ -61,6 +62,7 @@ export default function Home() {
   const [orchestratorStatus, setOrchestratorStatus] =
     useState<OrchestratorStatus | null>(null);
   const [prs, setPRs] = useState<PipelinePR[]>([]);
+  const [metrics, setMetrics] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'running' | 'completed'>('all');
@@ -69,10 +71,11 @@ export default function Home() {
   const fetchSessions = async (isManual = false) => {
     if (isManual) setRefreshing(true);
     try {
-      const [sessionsRes, statusRes, prsRes] = await Promise.all([
+      const [sessionsRes, statusRes, prsRes, metricsRes] = await Promise.all([
         fetch('/api/sessions'),
         fetch('/api/orchestrator/status'),
         fetch('/api/pipeline/prs'),
+        fetch('/api/metrics'),
       ]);
       if (!sessionsRes.ok) throw new Error('Failed to fetch');
       const data = await sessionsRes.json();
@@ -85,6 +88,10 @@ export default function Home() {
       if (prsRes.ok) {
         const prsData = await prsRes.json();
         setPRs(prsData.prs ?? []);
+      }
+      if (metricsRes.ok) {
+        const metricsData = await metricsRes.json();
+        setMetrics(metricsData);
       }
       setError(null);
     } catch (e) {
@@ -142,6 +149,9 @@ export default function Home() {
 
         {/* Stats Cards */}
         <StatsBar stats={stats} />
+
+        {/* Analytics Metrics */}
+        {metrics && <MetricsSection metrics={metrics} />}
 
         {/* Charts */}
         <DashboardCharts sessions={sessions} />
