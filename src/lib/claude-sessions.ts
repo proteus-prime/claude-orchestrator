@@ -2,6 +2,13 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
+export interface LinearIssueInfo {
+  issueNumber: number;
+  issueId: string;
+  title: string;
+  url: string;
+}
+
 export interface SessionStats {
   sessionId: string;
   project: string;
@@ -15,6 +22,7 @@ export interface SessionStats {
   messageCount: number;
   lastActivity: Date | null;
   filePath: string;
+  linearIssue?: LinearIssueInfo;
 }
 
 export interface Message {
@@ -31,6 +39,37 @@ export interface Message {
 }
 
 const CLAUDE_PROJECTS_DIR = path.join(os.homedir(), '.claude', 'projects');
+
+const LINEAR_WORKSPACE = 'theraai';
+const LINEAR_ISSUE_PREFIX = 'THE';
+
+function extractLinearIssueFromContent(content: string): { number: number; title: string } | null {
+  // Match "You are working on Linear issue #<number>: <title>"
+  const match = content.match(/You are working on Linear issue #(\d+):\s*(.+)/);
+  if (match) {
+    return { number: parseInt(match[1], 10), title: match[2].trim() };
+  }
+  return null;
+}
+
+function extractLinearIssueFromProjectDir(projectDir: string): { number: number } | null {
+  // Match pattern like "feature-<number>-<slug>" in directory name
+  const match = projectDir.match(/feature-(\d+)-/);
+  if (match) {
+    return { number: parseInt(match[1], 10) };
+  }
+  return null;
+}
+
+function buildLinearIssueInfo(issueNumber: number, title: string): LinearIssueInfo {
+  const issueId = `${LINEAR_ISSUE_PREFIX}-${issueNumber}`;
+  return {
+    issueNumber,
+    issueId,
+    title,
+    url: `https://linear.app/${LINEAR_WORKSPACE}/issue/${issueId}`,
+  };
+}
 
 export async function getProjects(): Promise<string[]> {
   try {
@@ -84,7 +123,11 @@ async function parseSessionFile(filePath: string, sessionId: string, project: st
   const toolCalls: string[] = [];
   let messageCount = 0;
   let lastActivity: Date | null = null;
-  
+  let linearIssue: LinearIssueInfo | undefined;
+
+  // Try to extract Linear issue from project directory name as primary source
+  const dirIssue = extractLinearIssueFromProjectDir(project);
+
   for (const line of lines) {
     try {
       const msg = JSON.parse(line);
@@ -94,6 +137,17 @@ async function parseSessionFile(filePath: string, sessionId: string, project: st
         lastActivity = new Date(msg.timestamp);
       }
       
+      // Extract Linear issue from the first user message content
+      if (!linearIssue && msg.type === 'user' && msg.message?.content) {
+        const content = typeof msg.message.content === 'string'
+          ? msg.message.content
+          : '';
+        const parsed = extractLinearIssueFromContent(content);
+        if (parsed) {
+          linearIssue = buildLinearIssueInfo(parsed.number, parsed.title);
+        }
+      }
+
       if (msg.type === 'assistant' && msg.message) {
         if (msg.message.model) {
           model = msg.message.model;
@@ -123,7 +177,12 @@ async function parseSessionFile(filePath: string, sessionId: string, project: st
   const stat = await fs.stat(filePath);
   const fiveMinAgo = Date.now() - 5 * 60 * 1000;
   const status = stat.mtimeMs > fiveMinAgo ? 'running' : 'completed';
-  
+
+  // Fall back to directory-based issue extraction if not found in messages
+  if (!linearIssue && dirIssue) {
+    linearIssue = buildLinearIssueInfo(dirIssue.number, '');
+  }
+
   return {
     sessionId,
     project: project.replace(/^-/, '').replace(/-/g, '/'),
@@ -137,6 +196,7 @@ async function parseSessionFile(filePath: string, sessionId: string, project: st
     messageCount,
     lastActivity,
     filePath,
+    linearIssue,
   };
 }
 

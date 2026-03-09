@@ -16,6 +16,13 @@ interface Message {
   };
 }
 
+interface LinearIssue {
+  issueNumber: number;
+  issueId: string;
+  title: string;
+  url: string;
+}
+
 interface SessionDetail {
   sessionId: string;
   project: string;
@@ -27,6 +34,7 @@ interface SessionDetail {
   };
   messageCount: number;
   messages: Message[];
+  linearIssue?: LinearIssue | null;
 }
 
 export default function SessionDetailPage() {
@@ -103,7 +111,23 @@ export default function SessionDetailPage() {
         </Link>
         
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-          <h1 className="text-xl font-bold mb-2">Session Detail</h1>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-xl font-bold">Session Detail</h1>
+            {session.linearIssue && (
+              <a
+                href={session.linearIssue.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-md text-sm hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+              >
+                <span className="font-semibold">{session.linearIssue.issueId}</span>
+                {session.linearIssue.title && (
+                  <span className="hidden sm:inline truncate max-w-xs">{session.linearIssue.title}</span>
+                )}
+                <span className="text-xs opacity-70">↗</span>
+              </a>
+            )}
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
               <span className="text-gray-500">Project:</span>

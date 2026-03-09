@@ -2,6 +2,13 @@
 
 import Link from 'next/link';
 
+interface LinearIssue {
+  issueNumber: number;
+  issueId: string;
+  title: string;
+  url: string;
+}
+
 interface Session {
   sessionId: string;
   project: string;
@@ -14,6 +21,7 @@ interface Session {
   messageCount: number;
   lastActivity: string | null;
   estimatedCost: number;
+  linearIssue?: LinearIssue;
 }
 
 export function SessionCard({ session }: { session: Session }) {
@@ -60,7 +68,23 @@ export function SessionCard({ session }: { session: Session }) {
       <h3 className="font-mono text-sm text-gray-800 dark:text-gray-200 mb-1 truncate" title={session.project}>
         {session.project}
       </h3>
-      
+
+      {session.linearIssue && (
+        <a
+          href={session.linearIssue.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={e => e.stopPropagation()}
+          className="inline-flex items-center gap-1 mb-2 px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+          title={session.linearIssue.title || session.linearIssue.issueId}
+        >
+          <span className="font-medium">{session.linearIssue.issueId}</span>
+          {session.linearIssue.title && (
+            <span className="truncate max-w-[160px]">{session.linearIssue.title}</span>
+          )}
+        </a>
+      )}
+
       <div className="flex items-center gap-2 mb-3">
         <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs">
           {modelShort}
