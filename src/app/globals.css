@@ -100,7 +100,8 @@
     @apply bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl;
   }
   .glass-card-hover {
-    @apply glass-card hover:bg-slate-800/70 hover:border-slate-600/50 transition-all duration-200;
+    @apply bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl;
+    @apply hover:bg-slate-800/70 hover:border-slate-600/50 transition-all duration-200;
   }
   .accent-gradient {
     background: linear-gradient(135deg, oklch(0.65 0.2 265), oklch(0.60 0.22 295));

@@ -29,7 +29,7 @@ function DonutChart({ segments }: { segments: DonutSegment[] }) {
 
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
+      <div className="flex items-center justify-center h-full text-slate-500 text-xs">
         No token data
       </div>
     );
@@ -40,7 +40,6 @@ function DonutChart({ segments }: { segments: DonutSegment[] }) {
   const r = 36;
   const strokeWidth = 10;
   const circumference = 2 * Math.PI * r;
-  // gap between segments (in degrees)
   const gapDeg = 2;
 
   let startAngle = -90;
@@ -70,7 +69,7 @@ function DonutChart({ segments }: { segments: DonutSegment[] }) {
         fill="none"
         stroke="currentColor"
         strokeWidth={strokeWidth}
-        className="text-muted/40"
+        className="text-slate-700/40"
       />
       {svgSegments.map((seg) => (
         <circle
@@ -93,7 +92,7 @@ function DonutChart({ segments }: { segments: DonutSegment[] }) {
         textAnchor="middle"
         fontSize="9"
         fontWeight="700"
-        className="fill-foreground"
+        className="fill-slate-100"
       >
         {formatTokens(total)}
       </text>
@@ -102,7 +101,7 @@ function DonutChart({ segments }: { segments: DonutSegment[] }) {
         y={cy + 6}
         textAnchor="middle"
         fontSize="5"
-        className="fill-muted-foreground"
+        className="fill-slate-400"
       >
         total tokens
       </text>
@@ -113,7 +112,7 @@ function DonutChart({ segments }: { segments: DonutSegment[] }) {
 function SessionTimeline({ sessions }: { sessions: Session[] }) {
   const BUCKETS = 12;
   const now = Date.now();
-  const bucketMs = 3_600_000; // 1 hour
+  const bucketMs = 3_600_000;
 
   const buckets = Array.from({ length: BUCKETS }, (_, i) => {
     const bucketTime = now - (BUCKETS - 1 - i) * bucketMs;
@@ -161,7 +160,7 @@ function SessionTimeline({ sessions }: { sessions: Session[] }) {
                 width={barW}
                 height={compH}
                 fill="currentColor"
-                className="text-muted-foreground/25"
+                className="text-slate-600/40"
                 rx={1.5}
               />
             )}
@@ -178,7 +177,6 @@ function SessionTimeline({ sessions }: { sessions: Session[] }) {
           </g>
         );
       })}
-      {/* X axis labels — every 3rd bucket */}
       {buckets.map((bucket, i) => {
         if (i % 3 !== 0) return null;
         return (
@@ -188,7 +186,7 @@ function SessionTimeline({ sessions }: { sessions: Session[] }) {
             y={H - 2}
             textAnchor="middle"
             fontSize="5.5"
-            className="fill-muted-foreground"
+            className="fill-slate-500"
           >
             {bucket.label}
           </text>
@@ -205,7 +203,7 @@ export function DashboardCharts({ sessions }: DashboardChartsProps) {
   const grandTotal = totalInput + totalOutput + totalCached;
 
   const tokenSegments: DonutSegment[] = [
-    { label: 'Input', value: totalInput, color: '#3B82F6' },
+    { label: 'Input', value: totalInput, color: '#6366F1' },
     { label: 'Output', value: totalOutput, color: '#8B5CF6' },
     { label: 'Cached', value: totalCached, color: '#10B981' },
   ];
@@ -216,8 +214,8 @@ export function DashboardCharts({ sessions }: DashboardChartsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       {/* Token Distribution */}
-      <div className="bg-card rounded-xl border border-border p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-4">
+      <div className="glass-card p-5">
+        <h3 className="text-sm font-semibold text-slate-200 mb-4">
           Token Distribution
         </h3>
         <div className="flex items-center gap-6">
@@ -233,19 +231,19 @@ export function DashboardCharts({ sessions }: DashboardChartsProps) {
                       className="w-2.5 h-2.5 rounded-sm"
                       style={{ backgroundColor: seg.color }}
                     />
-                    <span className="text-muted-foreground">{seg.label}</span>
+                    <span className="text-slate-400">{seg.label}</span>
                   </div>
                   <div className="flex items-center gap-2 tabular-nums">
-                    <span className="font-medium text-foreground">
+                    <span className="font-medium text-slate-200">
                       {formatTokens(seg.value)}
                     </span>
-                    <span className="text-muted-foreground w-8 text-right">
+                    <span className="text-slate-500 w-8 text-right">
                       {pct(seg.value)}
                     </span>
                   </div>
                 </div>
                 {/* Mini bar */}
-                <div className="h-1 bg-muted rounded-full overflow-hidden">
+                <div className="h-1 bg-slate-700/50 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{
@@ -262,18 +260,18 @@ export function DashboardCharts({ sessions }: DashboardChartsProps) {
       </div>
 
       {/* Session Activity Timeline */}
-      <div className="bg-card rounded-xl border border-border p-5">
+      <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-foreground">
+          <h3 className="text-sm font-semibold text-slate-200">
             Session Activity
           </h3>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-3 text-xs text-slate-400">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-sm bg-emerald-500" />
               Running
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-sm bg-muted-foreground/30" />
+              <div className="w-2 h-2 rounded-sm bg-slate-600" />
               Completed
             </div>
           </div>
@@ -281,7 +279,7 @@ export function DashboardCharts({ sessions }: DashboardChartsProps) {
         <div className="h-28">
           <SessionTimeline sessions={sessions} />
         </div>
-        <p className="text-xs text-muted-foreground mt-1">Last 12 hours</p>
+        <p className="text-xs text-slate-500 mt-1">Last 12 hours</p>
       </div>
     </div>
   );
