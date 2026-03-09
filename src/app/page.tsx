@@ -39,6 +39,15 @@ interface OrchestratorStatus {
   };
 }
 
+interface PipelinePR {
+  prUrl: string;
+  prNumber: number;
+  repo: string;
+  sessionId: string;
+  project: string;
+  createdAt: string | null;
+}
+
 export default function Home() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [stats, setStats] = useState<Stats>({
@@ -48,15 +57,17 @@ export default function Home() {
     totalCost: 0,
   });
   const [orchestratorStatus, setOrchestratorStatus] = useState<OrchestratorStatus | null>(null);
+  const [prs, setPRs] = useState<PipelinePR[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'running' | 'completed'>('all');
 
   const fetchSessions = async () => {
     try {
-      const [sessionsRes, statusRes] = await Promise.all([
+      const [sessionsRes, statusRes, prsRes] = await Promise.all([
         fetch('/api/sessions'),
         fetch('/api/orchestrator/status'),
+        fetch('/api/pipeline/prs'),
       ]);
       if (!sessionsRes.ok) throw new Error('Failed to fetch');
       const data = await sessionsRes.json();
@@ -65,6 +76,10 @@ export default function Home() {
       if (statusRes.ok) {
         const statusData = await statusRes.json();
         setOrchestratorStatus(statusData);
+      }
+      if (prsRes.ok) {
+        const prsData = await prsRes.json();
+        setPRs(prsData.prs ?? []);
       }
       setError(null);
     } catch (e) {
@@ -134,6 +149,56 @@ export default function Home() {
         <OrchestratorStatusBar orchestratorStatus={orchestratorStatus} />
 
         <StatsBar stats={stats} />
+
+        {prs.length > 0 && (
+          <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-purple-500 inline-block" />
+                Recent Pull Requests
+                <span className="ml-1 px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium">
+                  {prs.length}
+                </span>
+              </h2>
+              <Link
+                href="/pipeline"
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                View all →
+              </Link>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {prs.slice(0, 5).map((pr, i) => (
+                <a
+                  key={`${pr.prUrl}-${i}`}
+                  href={pr.prUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-md text-xs hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors"
+                  title={pr.project}
+                >
+                  <span className="font-medium text-purple-700 dark:text-purple-300">
+                    {pr.repo.split('/')[1] ?? pr.repo}
+                  </span>
+                  <span className="text-purple-500 dark:text-purple-400">#{pr.prNumber}</span>
+                  {pr.createdAt && (
+                    <span className="text-gray-400 dark:text-gray-500">
+                      · {new Date(pr.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </span>
+                  )}
+                </a>
+              ))}
+              {prs.length > 5 && (
+                <Link
+                  href="/pipeline"
+                  className="flex items-center px-2.5 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  +{prs.length - 5} more
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-2 mb-4">
           {(['all', 'running', 'completed'] as const).map(f => (
