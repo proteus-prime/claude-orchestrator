@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🦀 Claude Orchestrator
 
-## Getting Started
+A real-time monitoring dashboard for Claude Code sessions. Track token usage, costs, and worker activity across all your Claude Code processes.
 
-First, run the development server:
+![Dashboard](docs/assets/dashboard-preview.png)
+
+## Features
+
+- **Real-time Session Monitoring** — See all active and completed Claude Code sessions
+- **Token Usage Tracking** — Input, output, cache read, and cache write tokens per session
+- **Cost Estimation** — Automatic cost calculation based on model pricing (Haiku/Sonnet/Opus)
+- **Tool Call Visibility** — See which tools each session has invoked
+- **Session Details** — Drill into individual sessions for full message history
+- **Auto-refresh** — Dashboard polls every 5 seconds for live updates
+
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone the repo
+git clone https://github.com/proteus-prime/claude-orchestrator.git
+cd claude-orchestrator
+
+# Install dependencies
+npm install
+
+# Build and start (production)
+npm run build
+npm run start -- -p 3334 -H 0.0.0.0
+
+# Or run in development mode
+npm run dev -- -p 3334
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3334` to view the dashboard.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Requirements
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Node.js 18+
+- Claude Code CLI installed (`~/.claude/projects/` must exist)
+- Active Claude Code sessions to monitor
 
-## Learn More
+## How It Works
 
-To learn more about Next.js, take a look at the following resources:
+Claude Code stores session logs as JSONL files in `~/.claude/projects/`. This dashboard:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Scans all project directories under `~/.claude/projects/`
+2. Parses each `.jsonl` session file for usage statistics
+3. Aggregates token counts and estimates costs
+4. Serves everything via a Next.js API + React frontend
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+See [docs/architecture.md](docs/architecture.md) for detailed information.
 
-## Deploy on Vercel
+## Running as a Service
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+For persistent monitoring, run in a tmux session:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# Create tmux session
+tmux new-session -d -s orchestrator -c ~/claude-orchestrator \
+  "npm run build && npm run start -- -p 3334 -H 0.0.0.0"
+
+# Attach to view logs
+tmux attach -t orchestrator
+
+# Detach: Ctrl+B, D
+```
+
+## API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/sessions` | List all sessions with stats |
+| `GET /api/sessions/[sessionId]` | Get details for a specific session |
+
+See [docs/api.md](docs/api.md) for response schemas.
+
+## Configuration
+
+Environment variables (optional):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | 3000 | Server port |
+| `CLAUDE_HOME` | `~/.claude` | Claude config directory |
+
+## Cost Calculation
+
+Pricing is based on Anthropic's API rates (March 2026):
+
+| Model | Input | Output | Cache Read | Cache Write |
+|-------|-------|--------|------------|-------------|
+| Haiku | $0.80/M | $4.00/M | $0.08/M | $1.00/M |
+| Sonnet | $3.00/M | $15.00/M | $0.30/M | $3.75/M |
+| Opus | $15.00/M | $75.00/M | $1.50/M | $18.75/M |
+
+## Related Projects
+
+- **[proteus-integrations](https://github.com/proteus-prime/proteus-integrations)** — Linear orchestrator for automated issue processing
+- **[DevClaw](https://github.com/openclaw/devclaw)** — Full-featured code orchestration plugin
+
+## License
+
+MIT
