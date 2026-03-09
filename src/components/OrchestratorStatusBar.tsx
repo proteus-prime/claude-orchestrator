@@ -1,6 +1,7 @@
 'use client';
 
-import { CheckCircle2, AlertCircle, FolderGit2, Clock } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCircle2, AlertCircle, FolderGit2, Clock, TriangleAlert } from 'lucide-react';
 
 interface OrchestratorStatus {
   status: 'ok' | 'error';
@@ -11,6 +12,7 @@ interface OrchestratorStatus {
     activeSessions: number;
     totalTokens: number;
     totalCost: number;
+    errorCount?: number;
   };
 }
 
@@ -22,6 +24,7 @@ export function OrchestratorStatusBar({
   if (!orchestratorStatus) return null;
 
   const { status, timestamp, orchestrator } = orchestratorStatus;
+  const errorCount = orchestrator.errorCount ?? 0;
   const lastUpdated = new Date(timestamp).toLocaleTimeString(undefined, {
     hour: '2-digit',
     minute: '2-digit',
@@ -89,6 +92,21 @@ export function OrchestratorStatusBar({
           total sessions
         </span>
       </div>
+
+      {/* Error count */}
+      {errorCount > 0 && (
+        <>
+          <span className="text-slate-600 hidden sm:block">|</span>
+          <Link
+            href="/errors"
+            className="flex items-center gap-1 text-rose-400 hover:text-rose-300 transition-colors"
+          >
+            <TriangleAlert size={12} />
+            <span className="font-semibold">{errorCount}</span>
+            <span className="text-rose-400/80">{errorCount === 1 ? 'error' : 'errors'}</span>
+          </Link>
+        </>
+      )}
 
       {/* Timestamp */}
       <div className="ml-auto flex items-center gap-1 text-slate-500">

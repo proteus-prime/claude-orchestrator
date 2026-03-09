@@ -108,6 +108,18 @@ const EVENT_META: Record<OrchestratorEventType, EventMeta> = {
     chipBg: 'bg-teal-500/15 border-teal-500/30',
     chipText: 'text-teal-400',
   },
+  error: {
+    label: 'Error',
+    abbr: 'ERR',
+    textColor: 'text-red-400',
+    nodeBg: 'bg-red-500',
+    nodeBorder: 'border-red-400',
+    glowColor: '#ef4444',
+    shape: 'diamond',
+    filled: true,
+    chipBg: 'bg-red-500/15 border-red-500/30',
+    chipText: 'text-red-400',
+  },
 };
 
 const ALL_TYPES: OrchestratorEventType[] = [
@@ -117,6 +129,7 @@ const ALL_TYPES: OrchestratorEventType[] = [
   'message_received',
   'tool_invoked',
   'token_usage',
+  'error',
 ];
 
 /* ─── Helpers ──────────────────────────────────────────────────────── */
@@ -159,6 +172,10 @@ function getEventSummary(event: OrchestratorEvent): string {
     }
     case 'session_started':
       return event.data.model ? `Model: ${String(event.data.model)}` : '';
+    case 'error': {
+      const msg = String(event.data.message ?? '');
+      return msg.length > 120 ? msg.slice(0, 120) + '…' : msg;
+    }
     default:
       return '';
   }
@@ -236,6 +253,8 @@ function EventItem({
   const projectShort = projectParts.slice(-2).join('/');
   const summary = getEventSummary(event);
 
+  const isError = event.type === 'error';
+
   return (
     <div
       className={`flex gap-0 group transition-all duration-500 ${isNew ? 'animate-[slideInDown_0.4s_ease-out]' : ''}`}
@@ -257,10 +276,10 @@ function EventItem({
       {/* Event card */}
       <div
         className={`flex-1 mb-3 ml-2 rounded-xl border transition-all duration-200 overflow-hidden
-          ${isNew ? 'border-cyan-400/40 bg-cyan-950/60' : 'border-cyan-500/10 bg-cyan-950/25'}
-          hover:border-cyan-400/30 hover:bg-cyan-950/50 backdrop-blur-sm`}
+          ${isError ? 'border-red-500/40 bg-red-950/40' : isNew ? 'border-cyan-400/40 bg-cyan-950/60' : 'border-cyan-500/10 bg-cyan-950/25'}
+          ${isError ? 'hover:border-red-400/50 hover:bg-red-950/50' : 'hover:border-cyan-400/30 hover:bg-cyan-950/50'} backdrop-blur-sm`}
         style={
-          isNew
+          isNew || isError
             ? { boxShadow: `0 0 20px ${meta.glowColor}20, inset 0 0 20px ${meta.glowColor}08` }
             : undefined
         }

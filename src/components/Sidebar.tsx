@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Activity, Users, GitPullRequest } from 'lucide-react';
+import { LayoutDashboard, Activity, Users, GitPullRequest, TriangleAlert } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/activity', label: 'Activity', icon: Activity },
   { href: '/workers', label: 'Workers', icon: Users },
   { href: '/pipeline', label: 'Pipeline', icon: GitPullRequest },
+  { href: '/errors', label: 'Errors', icon: TriangleAlert },
 ];
 
 export function Sidebar() {
