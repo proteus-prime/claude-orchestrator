@@ -16,18 +16,17 @@ export function Sidebar() {
 
   return (
     <aside
-      className="fixed inset-y-0 left-0 flex flex-col w-60 bg-sidebar border-r border-sidebar-border z-10"
-      style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}
+      className="fixed inset-y-0 left-0 flex flex-col w-60 bg-slate-900/80 backdrop-blur-md border-r border-slate-700/50 z-10"
     >
       {/* Header */}
-      <div className="px-4 py-5 border-b border-sidebar-border">
+      <div className="px-4 py-5 border-b border-slate-700/50">
         <div className="flex items-center gap-2.5">
-          <span className="text-xl leading-none">🦀</span>
+          <span className="text-xl leading-none">🔱</span>
           <div>
-            <p className="text-[13px] font-semibold text-sidebar-foreground leading-tight">
-              Claude Orchestrator
+            <p className="text-[13px] font-semibold text-slate-100 leading-tight">
+              Proteus Dev Hub
             </p>
-            <p className="text-[11px] text-sidebar-foreground/50 leading-tight mt-0.5">
+            <p className="text-[11px] text-slate-400 leading-tight mt-0.5">
               Session Monitor
             </p>
           </div>
@@ -45,8 +44,8 @@ export function Sidebar() {
               className={[
                 'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200',
               ].join(' ')}
             >
               <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
@@ -57,8 +56,8 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-sidebar-border">
-        <p className="text-[11px] text-sidebar-foreground/40 font-mono">v0.1.0</p>
+      <div className="px-4 py-3 border-t border-slate-700/50">
+        <p className="text-[11px] text-slate-500 font-mono">v0.1.0</p>
       </div>
     </aside>
   );

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Electrolize, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const electrolize = Electrolize({
+  variable: "--font-electrolize",
+  weight: "400",
   subsets: ["latin"],
 });
 
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Claude Orchestrator",
+  title: "Proteus Dev Hub",
   description: "Real-time Claude Code session monitoring",
 };
 
@@ -24,9 +25,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${electrolize.variable} ${geistMono.variable} antialiased bg-slate-950 text-slate-100`}
+        style={{ fontFamily: "var(--font-electrolize), sans-serif" }}
       >
         <div className="flex min-h-screen">
           <Sidebar />
