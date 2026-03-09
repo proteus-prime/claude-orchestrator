@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface Message {
   type: 'user' | 'assistant' | 'tool_result' | 'tool_call';
@@ -22,6 +23,12 @@ interface LinearIssue {
   url: string;
 }
 
+interface SessionPR {
+  prUrl: string;
+  prNumber: number;
+  repo: string;
+}
+
 interface SessionDetail {
   sessionId: string;
   project: string;
@@ -34,6 +41,7 @@ interface SessionDetail {
   messageCount: number;
   messages: Message[];
   linearIssue?: LinearIssue | null;
+  pr?: SessionPR | null;
 }
 
 export default function SessionDetailPage() {
@@ -104,27 +112,49 @@ export default function SessionDetailPage() {
       <div className="max-w-4xl mx-auto">
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-xl font-bold">Session Detail</h1>
-            {session.linearIssue && (
-              <a
-                href={session.linearIssue.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200 rounded-md text-sm hover:bg-cyan-200 dark:hover:bg-cyan-800 transition-colors"
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Link
+                href="/pipeline"
+                className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
               >
-                <span className="font-semibold">{session.linearIssue.issueId}</span>
-                {session.linearIssue.title && (
-                  <span className="hidden sm:inline truncate max-w-xs">{session.linearIssue.title}</span>
-                )}
-                <span className="text-xs opacity-70">↗</span>
-              </a>
-            )}
+                ← Pipeline
+              </Link>
+              <h1 className="text-xl font-bold">Session Detail</h1>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {session.linearIssue && (
+                <a
+                  href={session.linearIssue.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-1 bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded-md text-sm hover:bg-violet-500/30 transition-colors"
+                >
+                  <span className="font-semibold">{session.linearIssue.issueId}</span>
+                  {session.linearIssue.title && (
+                    <span className="hidden sm:inline truncate max-w-xs">{session.linearIssue.title}</span>
+                  )}
+                  <span className="text-xs opacity-70">↗</span>
+                </a>
+              )}
+              {session.pr && (
+                <a
+                  href={session.pr.prUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-md text-sm hover:bg-cyan-500/30 transition-colors"
+                >
+                  <span className="font-semibold">PR #{session.pr.prNumber}</span>
+                  <span className="hidden sm:inline text-xs opacity-70 truncate max-w-[140px]">{session.pr.repo}</span>
+                  <span className="text-xs opacity-70">↗</span>
+                </a>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
               <span className="text-gray-500">Project:</span>
-              <p className="font-mono">{session.project}</p>
+              <p className="font-mono text-xs truncate" title={session.project}>{session.project}</p>
             </div>
             <div>
               <span className="text-gray-500">Model:</span>
@@ -139,6 +169,20 @@ export default function SessionDetailPage() {
               <p>{session.totalTokens.input.toLocaleString()} in / {session.totalTokens.output.toLocaleString()} out</p>
             </div>
           </div>
+          {session.messages.length > 0 && session.messages[0].timestamp && session.messages[session.messages.length - 1].timestamp && (
+            <div className="mt-3 pt-3 border-t border-gray-700/40 text-xs text-gray-500">
+              {(() => {
+                const start = new Date(session.messages[0].timestamp).getTime();
+                const end = new Date(session.messages[session.messages.length - 1].timestamp).getTime();
+                const durMs = end - start;
+                const durMins = Math.floor(durMs / 60000);
+                const durHrs = Math.floor(durMins / 60);
+                const remainMins = durMins % 60;
+                const durStr = durHrs > 0 ? `${durHrs}h ${remainMins}m` : `${durMins}m`;
+                return `Duration: ${durStr} · Started ${new Date(session.messages[0].timestamp).toLocaleString()}`;
+              })()}
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">

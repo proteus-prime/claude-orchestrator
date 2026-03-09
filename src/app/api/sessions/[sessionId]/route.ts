@@ -5,6 +5,8 @@ import os from 'os';
 
 export const dynamic = 'force-dynamic';
 
+const GITHUB_PR_URL_PATTERN = /https:\/\/github\.com\/([^/]+\/[^/]+)\/pull\/(\d+)/;
+
 interface ParsedMessage {
   type: 'user' | 'assistant' | 'tool_result' | 'tool_call';
   timestamp: string;
@@ -15,6 +17,12 @@ interface ParsedMessage {
     input: number;
     output: number;
   };
+}
+
+interface SessionPR {
+  prUrl: string;
+  prNumber: number;
+  repo: string;
 }
 
 export async function GET(
@@ -57,6 +65,8 @@ export async function GET(
     let totalOutputTokens = 0;
     let model = 'unknown';
     let linearIssue: { issueNumber: number; issueId: string; title: string; url: string } | undefined;
+    let sessionPR: SessionPR | null = null;
+    let pendingPRToolUse = false;
 
     // Try to extract Linear issue from project directory name first
     const dirMatch = projectName.match(/feature-(\d+)-/);
@@ -138,11 +148,39 @@ export async function GET(
           messages.push({
             type: 'tool_result',
             timestamp: msg.timestamp || '',
-            content: typeof result.content === 'string' 
-              ? result.content 
+            content: typeof result.content === 'string'
+              ? result.content
               : JSON.stringify(result.content),
             toolName: result.toolName,
           });
+        }
+
+        // PR detection state machine
+        if (msg.type === 'assistant' && Array.isArray(msg.message?.content)) {
+          pendingPRToolUse = false;
+          for (const block of msg.message.content) {
+            if (
+              block.type === 'tool_use' &&
+              block.name === 'Bash' &&
+              typeof block.input?.command === 'string' &&
+              block.input.command.includes('gh pr create')
+            ) {
+              pendingPRToolUse = true;
+              break;
+            }
+          }
+        } else if (pendingPRToolUse && (msg.type === 'tool_result' || msg.type === 'toolResult')) {
+          const result = msg.message || msg;
+          const resultStr = typeof result.content === 'string'
+            ? result.content
+            : JSON.stringify(result.content ?? '');
+          const prMatch = resultStr.match(GITHUB_PR_URL_PATTERN);
+          if (prMatch && !sessionPR) {
+            sessionPR = { prUrl: prMatch[0], prNumber: parseInt(prMatch[2], 10), repo: prMatch[1] };
+          }
+          pendingPRToolUse = false;
+        } else {
+          pendingPRToolUse = false;
         }
       } catch {
         // Skip malformed lines
@@ -161,6 +199,7 @@ export async function GET(
       messageCount: messages.length,
       messages,
       linearIssue: linearIssue || null,
+      pr: sessionPR,
     });
   } catch (error) {
     console.error('Error fetching session:', error);
