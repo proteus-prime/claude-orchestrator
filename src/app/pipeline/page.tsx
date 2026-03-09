@@ -67,12 +67,12 @@ function PRCard({ pr }: { pr: PipelinePR }) {
     : null;
 
   return (
-    <div className="border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20 rounded p-3 text-sm">
+    <div className="border border-cyan-300 dark:border-cyan-700 bg-purple-50 dark:bg-cyan-900/20 rounded p-3 text-sm">
       <div className="flex items-start justify-between gap-2 mb-1">
         <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
           {pr.repo}
         </span>
-        <span className="shrink-0 px-1.5 py-0.5 rounded text-xs font-medium bg-purple-500 text-white">
+        <span className="shrink-0 px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-500 text-white">
           #{pr.prNumber}
         </span>
       </div>
@@ -220,7 +220,7 @@ export default function PipelinePage() {
             <Column
               title="Pull Requests"
               count={prs.length}
-              headerColor="bg-purple-600"
+              headerColor="bg-cyan-600"
             >
               {prs.map((pr, i) => (
                 <PRCard key={`${pr.prUrl}-${i}`} pr={pr} />

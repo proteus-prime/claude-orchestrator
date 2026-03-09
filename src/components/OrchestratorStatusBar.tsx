@@ -33,8 +33,8 @@ export function OrchestratorStatusBar({
     <div
       className={`flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 rounded-xl mb-5 border text-xs ${
         isOk
-          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50'
-          : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50'
+          ? 'bg-emerald-950/40 border-emerald-800/40'
+          : 'bg-rose-950/40 border-rose-800/40'
       }`}
     >
       {/* Status indicator */}
@@ -42,48 +42,48 @@ export function OrchestratorStatusBar({
         {isOk ? (
           <CheckCircle2
             size={13}
-            className="text-emerald-600 dark:text-emerald-400"
+            className="text-emerald-400"
           />
         ) : (
-          <AlertCircle size={13} className="text-red-600 dark:text-red-400" />
+          <AlertCircle size={13} className="text-rose-400" />
         )}
         <span
           className={`font-semibold ${
             isOk
-              ? 'text-emerald-700 dark:text-emerald-400'
-              : 'text-red-700 dark:text-red-400'
+              ? 'text-emerald-400'
+              : 'text-rose-400'
           }`}
         >
           Orchestrator {isOk ? 'Online' : 'Error'}
         </span>
       </div>
 
-      <span className="text-border hidden sm:block">|</span>
+      <span className="text-slate-600 hidden sm:block">|</span>
 
       {/* Projects */}
-      <div className="flex items-center gap-1.5 text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-slate-400">
         <FolderGit2 size={12} />
         <span>
-          <span className="font-semibold text-foreground">
+          <span className="font-semibold text-slate-200">
             {orchestrator.projectsTracked}
           </span>{' '}
           projects tracked
         </span>
       </div>
 
-      <span className="text-border hidden sm:block">|</span>
+      <span className="text-slate-600 hidden sm:block">|</span>
 
       {/* Sessions */}
-      <div className="flex items-center gap-1 text-muted-foreground">
+      <div className="flex items-center gap-1 text-slate-400">
         <span>
-          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+          <span className="font-semibold text-emerald-400">
             {orchestrator.activeSessions}
           </span>{' '}
           active
         </span>
         <span>/</span>
         <span>
-          <span className="font-semibold text-foreground">
+          <span className="font-semibold text-slate-200">
             {orchestrator.totalSessions}
           </span>{' '}
           total sessions
@@ -91,7 +91,7 @@ export function OrchestratorStatusBar({
       </div>
 
       {/* Timestamp */}
-      <div className="ml-auto flex items-center gap-1 text-muted-foreground">
+      <div className="ml-auto flex items-center gap-1 text-slate-500">
         <Clock size={11} />
         <span>Updated {lastUpdated}</span>
       </div>
