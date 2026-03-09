@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import type { OrchestratorEventType } from '@/app/api/orchestrator/events/route';
 
 interface OrchestratorEvent {
@@ -13,51 +13,100 @@ interface OrchestratorEvent {
   data: Record<string, unknown>;
 }
 
-const EVENT_CONFIG: Record<
-  OrchestratorEventType,
-  { label: string; icon: string; textColor: string; dotColor: string; activeBg: string }
-> = {
+/* ─── Event metadata ───────────────────────────────────────────────── */
+
+type EventMeta = {
+  label: string;
+  abbr: string;
+  /** Tailwind text color */
+  textColor: string;
+  /** Tailwind bg for filled nodes */
+  nodeBg: string;
+  /** Tailwind border / ring color */
+  nodeBorder: string;
+  /** Tailwind glow shadow (box-shadow via inline or custom class) */
+  glowColor: string;
+  /** Node shape: circle | diamond | square | pulse */
+  shape: 'circle' | 'diamond' | 'square' | 'pulse';
+  /** Whether node is filled vs hollow */
+  filled: boolean;
+  /** Filter chip accent */
+  chipBg: string;
+  chipText: string;
+};
+
+const EVENT_META: Record<OrchestratorEventType, EventMeta> = {
   session_started: {
     label: 'Session Started',
-    icon: '▶',
-    textColor: 'text-green-600 dark:text-green-400',
-    dotColor: 'bg-green-500',
-    activeBg: 'bg-green-500',
+    abbr: 'START',
+    textColor: 'text-emerald-400',
+    nodeBg: 'bg-emerald-500',
+    nodeBorder: 'border-emerald-400',
+    glowColor: '#10b981',
+    shape: 'pulse',
+    filled: true,
+    chipBg: 'bg-emerald-500/15 border-emerald-500/30',
+    chipText: 'text-emerald-400',
   },
   session_completed: {
     label: 'Session Ended',
-    icon: '■',
-    textColor: 'text-gray-500 dark:text-gray-400',
-    dotColor: 'bg-gray-400',
-    activeBg: 'bg-gray-500',
+    abbr: 'END',
+    textColor: 'text-slate-400',
+    nodeBg: 'bg-slate-500',
+    nodeBorder: 'border-slate-400',
+    glowColor: '#64748b',
+    shape: 'square',
+    filled: false,
+    chipBg: 'bg-slate-500/15 border-slate-500/30',
+    chipText: 'text-slate-400',
   },
   message_sent: {
     label: 'Message',
-    icon: '→',
-    textColor: 'text-blue-600 dark:text-blue-400',
-    dotColor: 'bg-blue-500',
-    activeBg: 'bg-blue-500',
+    abbr: 'MSG',
+    textColor: 'text-blue-400',
+    nodeBg: 'bg-blue-500',
+    nodeBorder: 'border-blue-400',
+    glowColor: '#3b82f6',
+    shape: 'circle',
+    filled: false,
+    chipBg: 'bg-blue-500/15 border-blue-500/30',
+    chipText: 'text-blue-400',
   },
   message_received: {
     label: 'Response',
-    icon: '←',
-    textColor: 'text-cyan-600 dark:text-cyan-400',
-    dotColor: 'bg-cyan-500',
-    activeBg: 'bg-cyan-500',
+    abbr: 'RES',
+    textColor: 'text-cyan-400',
+    nodeBg: 'bg-cyan-500',
+    nodeBorder: 'border-cyan-400',
+    glowColor: '#06b6d4',
+    shape: 'circle',
+    filled: true,
+    chipBg: 'bg-cyan-500/15 border-cyan-500/30',
+    chipText: 'text-cyan-400',
   },
   tool_invoked: {
     label: 'Tool Used',
-    icon: '⚙',
-    textColor: 'text-orange-600 dark:text-orange-400',
-    dotColor: 'bg-orange-500',
-    activeBg: 'bg-orange-500',
+    abbr: 'TOOL',
+    textColor: 'text-amber-400',
+    nodeBg: 'bg-amber-500',
+    nodeBorder: 'border-amber-400',
+    glowColor: '#f59e0b',
+    shape: 'diamond',
+    filled: true,
+    chipBg: 'bg-amber-500/15 border-amber-500/30',
+    chipText: 'text-amber-400',
   },
   token_usage: {
     label: 'Tokens',
-    icon: '◈',
-    textColor: 'text-teal-600 dark:text-teal-400',
-    dotColor: 'bg-teal-500',
-    activeBg: 'bg-teal-500',
+    abbr: 'TOK',
+    textColor: 'text-teal-400',
+    nodeBg: 'bg-teal-500',
+    nodeBorder: 'border-teal-400',
+    glowColor: '#14b8a6',
+    shape: 'diamond',
+    filled: false,
+    chipBg: 'bg-teal-500/15 border-teal-500/30',
+    chipText: 'text-teal-400',
   },
 };
 
@@ -70,15 +119,25 @@ const ALL_TYPES: OrchestratorEventType[] = [
   'token_usage',
 ];
 
+/* ─── Helpers ──────────────────────────────────────────────────────── */
+
 function formatRelativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return 'Just now';
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 10) return 'just now';
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
   if (diffMin < 60) return `${diffMin}m ago`;
   if (diffMin < 1440) return `${Math.floor(diffMin / 60)}h ago`;
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function formatAbsTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
   });
 }
 
@@ -87,7 +146,7 @@ function getEventSummary(event: OrchestratorEvent): string {
     case 'message_sent':
     case 'message_received': {
       const content = String(event.data.content ?? '');
-      return content.length > 100 ? content.slice(0, 100) + '…' : content;
+      return content.length > 120 ? content.slice(0, 120) + '…' : content;
     }
     case 'tool_invoked':
       return String(event.data.toolName ?? 'unknown');
@@ -96,50 +155,218 @@ function getEventSummary(event: OrchestratorEvent): string {
       const out = Number(event.data.outputTokens ?? 0);
       const model = String(event.data.model ?? '');
       const modelShort = model.split('/').pop() ?? model;
-      return `${inp.toLocaleString()} in / ${out.toLocaleString()} out${modelShort ? ` · ${modelShort}` : ''}`;
+      return `${inp.toLocaleString()} in · ${out.toLocaleString()} out${modelShort ? ` · ${modelShort}` : ''}`;
     }
+    case 'session_started':
+      return event.data.model ? `Model: ${String(event.data.model)}` : '';
     default:
       return '';
   }
 }
 
-function EventItem({ event }: { event: OrchestratorEvent }) {
-  const config = EVENT_CONFIG[event.type];
+/* ─── Timeline Node ────────────────────────────────────────────────── */
+
+function TimelineNode({ meta, isFirst }: { meta: EventMeta; isFirst: boolean }) {
+  const baseSize = 'w-3 h-3';
+
+  if (meta.shape === 'pulse') {
+    return (
+      <div className="relative flex items-center justify-center w-5 h-5 shrink-0">
+        {isFirst && (
+          <span
+            className="absolute inset-0 rounded-full animate-ping opacity-60"
+            style={{ backgroundColor: meta.glowColor }}
+          />
+        )}
+        <span
+          className={`relative ${baseSize} rounded-full ${meta.nodeBg}`}
+          style={{ boxShadow: `0 0 8px ${meta.glowColor}` }}
+        />
+      </div>
+    );
+  }
+
+  if (meta.shape === 'diamond') {
+    return (
+      <div className="relative flex items-center justify-center w-5 h-5 shrink-0">
+        <span
+          className={`w-2.5 h-2.5 rotate-45 border ${meta.nodeBorder} ${meta.filled ? meta.nodeBg : 'bg-transparent'}`}
+          style={meta.filled ? { boxShadow: `0 0 6px ${meta.glowColor}` } : undefined}
+        />
+      </div>
+    );
+  }
+
+  if (meta.shape === 'square') {
+    return (
+      <div className="relative flex items-center justify-center w-5 h-5 shrink-0">
+        <span
+          className={`w-2.5 h-2.5 border ${meta.nodeBorder} ${meta.filled ? meta.nodeBg : 'bg-transparent'}`}
+        />
+      </div>
+    );
+  }
+
+  // circle
+  return (
+    <div className="relative flex items-center justify-center w-5 h-5 shrink-0">
+      <span
+        className={`${baseSize} rounded-full border-2 ${meta.nodeBorder} ${meta.filled ? meta.nodeBg : 'bg-slate-950'}`}
+        style={meta.filled ? { boxShadow: `0 0 6px ${meta.glowColor}` } : undefined}
+      />
+    </div>
+  );
+}
+
+/* ─── Single Event Item ────────────────────────────────────────────── */
+
+function EventItem({
+  event,
+  isLast,
+  isNew,
+  isFirst,
+}: {
+  event: OrchestratorEvent;
+  isLast: boolean;
+  isNew: boolean;
+  isFirst: boolean;
+}) {
+  const meta = EVENT_META[event.type];
   const projectParts = event.project.replace(/^\//, '').split('/');
   const projectShort = projectParts.slice(-2).join('/');
   const summary = getEventSummary(event);
 
   return (
-    <div className="flex gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
-      <div className="flex flex-col items-center pt-1 shrink-0">
-        <span className={`w-2 h-2 rounded-full ${config.dotColor}`} />
-        <div className="w-px flex-1 bg-gray-100 dark:bg-gray-800 mt-1" />
+    <div
+      className={`flex gap-0 group transition-all duration-500 ${isNew ? 'animate-[slideInDown_0.4s_ease-out]' : ''}`}
+    >
+      {/* Timeline spine column */}
+      <div className="flex flex-col items-center w-8 shrink-0">
+        <TimelineNode meta={meta} isFirst={isFirst} />
+        {!isLast && (
+          <div
+            className="w-px flex-1 mt-1"
+            style={{
+              background: `linear-gradient(to bottom, ${meta.glowColor}40, oklch(0.25 0.03 210))`,
+              minHeight: '2rem',
+            }}
+          />
+        )}
       </div>
-      <div className="flex-1 min-w-0 pb-1">
-        <div className="flex items-center justify-between gap-2 mb-0.5">
-          <span className={`text-xs font-semibold ${config.textColor}`}>
-            {config.icon} {config.label}
-          </span>
-          <span className="text-xs text-gray-400 shrink-0 tabular-nums">
-            {formatRelativeTime(event.timestamp)}
-          </span>
+
+      {/* Event card */}
+      <div
+        className={`flex-1 mb-3 ml-2 rounded-xl border transition-all duration-200 overflow-hidden
+          ${isNew ? 'border-cyan-400/40 bg-cyan-950/60' : 'border-cyan-500/10 bg-cyan-950/25'}
+          hover:border-cyan-400/30 hover:bg-cyan-950/50 backdrop-blur-sm`}
+        style={
+          isNew
+            ? { boxShadow: `0 0 20px ${meta.glowColor}20, inset 0 0 20px ${meta.glowColor}08` }
+            : undefined
+        }
+      >
+        {/* Card header */}
+        <div className="flex items-start justify-between px-3 pt-2.5 pb-1 gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className={`text-[10px] font-bold tracking-widest font-mono px-1.5 py-0.5 rounded ${meta.chipBg} ${meta.chipText} border shrink-0`}
+            >
+              {meta.abbr}
+            </span>
+            <span className={`text-xs font-semibold ${meta.textColor} truncate`}>
+              {meta.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] text-slate-500 font-mono tabular-nums hidden sm:block">
+              {formatAbsTime(event.timestamp)}
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono tabular-nums whitespace-nowrap">
+              {formatRelativeTime(event.timestamp)}
+            </span>
+          </div>
         </div>
-        <Link
-          href={`/session/${event.sessionId}`}
-          className="text-xs font-mono text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 truncate block"
-          title={event.project}
-        >
-          {projectShort}
-        </Link>
+
+        {/* Project link */}
+        <div className="px-3 pb-1">
+          <Link
+            href={`/session/${event.sessionId}`}
+            className="text-[11px] font-mono text-slate-500 hover:text-cyan-400 transition-colors truncate block"
+            title={event.project}
+          >
+            {projectShort}
+          </Link>
+        </div>
+
+        {/* Summary */}
         {summary && (
-          <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 line-clamp-2 break-words">
-            {summary}
-          </p>
+          <div className="px-3 pb-2.5">
+            <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2 break-words">
+              {summary}
+            </p>
+          </div>
         )}
       </div>
     </div>
   );
 }
+
+/* ─── Filter Chip ──────────────────────────────────────────────────── */
+
+function FilterChip({
+  type,
+  active,
+  count,
+  onClick,
+}: {
+  type: OrchestratorEventType;
+  active: boolean;
+  count: number;
+  onClick: () => void;
+}) {
+  const meta = EVENT_META[type];
+  return (
+    <button
+      onClick={onClick}
+      title={active ? `Hide ${meta.label}` : `Show ${meta.label}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all duration-150 font-mono
+        ${
+          active
+            ? `${meta.chipBg} ${meta.chipText} border-current/40`
+            : 'bg-slate-800/50 text-slate-500 border-slate-700/50 hover:border-slate-600/50 hover:text-slate-400'
+        }`}
+    >
+      <span className="tracking-wider">{meta.abbr}</span>
+      {active && (
+        <span className={`text-[9px] opacity-70 tabular-nums`}>{count}</span>
+      )}
+    </button>
+  );
+}
+
+/* ─── Live Pulse Indicator ─────────────────────────────────────────── */
+
+function LiveIndicator({ active }: { active: boolean }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span
+        className={`relative flex h-2 w-2 shrink-0`}
+      >
+        {active && (
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        )}
+        <span
+          className={`relative inline-flex rounded-full h-2 w-2 ${active ? 'bg-emerald-500' : 'bg-slate-600'}`}
+        />
+      </span>
+      <span className={`text-[10px] font-mono tracking-wider ${active ? 'text-emerald-400' : 'text-slate-500'}`}>
+        {active ? 'LIVE' : 'PAUSED'}
+      </span>
+    </div>
+  );
+}
+
+/* ─── Main ActivityFeed ────────────────────────────────────────────── */
 
 export interface ActivityFeedProps {
   maxItems?: number;
@@ -147,6 +374,8 @@ export interface ActivityFeedProps {
   showFilters?: boolean;
   className?: string;
 }
+
+const PAGE_SIZE = 25;
 
 export function ActivityFeed({
   maxItems = 50,
@@ -160,14 +389,29 @@ export function ActivityFeed({
   const [activeFilters, setActiveFilters] = useState<Set<OrchestratorEventType>>(
     new Set(ALL_TYPES)
   );
+  const [page, setPage] = useState(1);
+  const [newEventIds, setNewEventIds] = useState<Set<string>>(new Set());
+  const prevEventIds = useRef<Set<string>>(new Set());
 
   const fetchEvents = useCallback(async () => {
     try {
       const res = await fetch('/api/orchestrator/events');
       if (!res.ok) throw new Error('Failed to fetch events');
       const data = await res.json();
-      // Reverse to show newest-first
-      setEvents([...(data.events as OrchestratorEvent[])].reverse());
+      const fetched = [...(data.events as OrchestratorEvent[])].reverse();
+
+      // Track new events for animation
+      const newIds = new Set<string>();
+      fetched.forEach(e => {
+        if (!prevEventIds.current.has(e.id)) newIds.add(e.id);
+      });
+      if (newIds.size > 0) {
+        setNewEventIds(newIds);
+        setTimeout(() => setNewEventIds(new Set()), 2000);
+      }
+      prevEventIds.current = new Set(fetched.map(e => e.id));
+
+      setEvents(fetched);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error');
@@ -192,63 +436,122 @@ export function ActivityFeed({
       }
       return next;
     });
+    setPage(1);
   };
 
-  const visibleEvents = events.filter(e => activeFilters.has(e.type)).slice(0, maxItems);
+  const filteredEvents = events.filter(e => activeFilters.has(e.type));
+  const visibleEvents = filteredEvents.slice(0, Math.min(page * PAGE_SIZE, maxItems));
+  const hasMore = filteredEvents.length > visibleEvents.length;
+
+  // Count per type for filter badges
+  const countByType = ALL_TYPES.reduce<Record<string, number>>((acc, t) => {
+    acc[t] = events.filter(e => e.type === t).length;
+    return acc;
+  }, {});
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col ${className}`}
+      className={`flex flex-col rounded-2xl border border-cyan-500/15 bg-slate-950/80 backdrop-blur-md overflow-hidden ${className}`}
     >
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Activity Feed</h2>
+      {/* ── Header ── */}
+      <div className="px-5 py-4 border-b border-cyan-500/10 bg-slate-900/60 shrink-0">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400">{visibleEvents.length} events</span>
+            <div>
+              <h2 className="text-sm font-semibold text-slate-100 tracking-wide">
+                Activity Timeline
+              </h2>
+              <p className="text-[10px] text-slate-500 font-mono mt-0.5 tabular-nums">
+                {filteredEvents.length} events · showing {visibleEvents.length}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <LiveIndicator active={!error} />
             <button
-              onClick={fetchEvents}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              onClick={() => { fetchEvents(); }}
+              className="text-[10px] font-mono text-slate-500 hover:text-cyan-400 transition-colors border border-slate-700/50 hover:border-cyan-500/30 px-2 py-1 rounded-lg"
             >
-              Refresh
+              REFRESH
             </button>
           </div>
         </div>
 
+        {/* Filter chips */}
         {showFilters && (
-          <div className="flex flex-wrap gap-1">
-            {ALL_TYPES.map(type => {
-              const config = EVENT_CONFIG[type];
-              const active = activeFilters.has(type);
-              return (
-                <button
-                  key={type}
-                  onClick={() => toggleFilter(type)}
-                  title={active ? `Hide ${config.label}` : `Show ${config.label}`}
-                  className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                    active
-                      ? `${config.activeBg} text-white`
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  {config.label}
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap gap-1.5">
+            {ALL_TYPES.map(type => (
+              <FilterChip
+                key={type}
+                type={type}
+                active={activeFilters.has(type)}
+                count={countByType[type]}
+                onClick={() => toggleFilter(type)}
+              />
+            ))}
           </div>
         )}
       </div>
 
-      {/* Event list */}
-      <div className="px-4 overflow-y-auto flex-1">
+      {/* ── Timeline ── */}
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2">
         {loading ? (
-          <div className="text-center py-8 text-gray-400 text-sm">Loading events…</div>
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="flex gap-1">
+              {[0, 1, 2].map(i => (
+                <span
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-bounce"
+                  style={{ animationDelay: `${i * 0.15}s` }}
+                />
+              ))}
+            </div>
+            <span className="text-[11px] font-mono text-slate-500 tracking-widest">
+              LOADING EVENTS…
+            </span>
+          </div>
         ) : error ? (
-          <div className="text-center py-8 text-red-500 text-sm">{error}</div>
+          <div className="flex flex-col items-center justify-center py-16 gap-2">
+            <span className="text-xs font-mono text-red-400 border border-red-500/20 bg-red-950/20 px-3 py-2 rounded-lg">
+              {error}
+            </span>
+          </div>
         ) : visibleEvents.length === 0 ? (
-          <div className="text-center py-8 text-gray-400 text-sm">No events found</div>
+          <div className="flex flex-col items-center justify-center py-16 gap-2">
+            <div className="w-8 h-px bg-slate-700" />
+            <span className="text-[11px] font-mono text-slate-600 tracking-widest">
+              NO EVENTS
+            </span>
+            <div className="w-8 h-px bg-slate-700" />
+          </div>
         ) : (
-          visibleEvents.map(event => <EventItem key={event.id} event={event} />)
+          <>
+            {visibleEvents.map((event, i) => (
+              <EventItem
+                key={event.id}
+                event={event}
+                isFirst={i === 0}
+                isLast={i === visibleEvents.length - 1 && !hasMore}
+                isNew={newEventIds.has(event.id)}
+              />
+            ))}
+
+            {/* Load more */}
+            {hasMore && (
+              <div className="flex flex-col items-center py-4 gap-2">
+                <div className="flex items-center gap-3 w-full">
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent to-slate-700/50" />
+                  <button
+                    onClick={() => setPage(p => p + 1)}
+                    className="text-[11px] font-mono text-slate-400 hover:text-cyan-400 border border-slate-700/50 hover:border-cyan-500/30 px-3 py-1.5 rounded-lg transition-all duration-150"
+                  >
+                    LOAD MORE · {filteredEvents.length - visibleEvents.length} remaining
+                  </button>
+                  <div className="flex-1 h-px bg-gradient-to-l from-transparent to-slate-700/50" />
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
