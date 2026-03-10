@@ -11,7 +11,8 @@ export type OrchestratorEventType =
   | 'message_sent'
   | 'message_received'
   | 'tool_invoked'
-  | 'token_usage';
+  | 'token_usage'
+  | 'error';
 
 export interface OrchestratorEvent {
   id: string;
@@ -51,6 +52,36 @@ async function getEventsForSession(
         `${sessionId}-${lineIndex}-${suffix}`;
 
       if (msg.type === 'user' && msg.message?.content) {
+        // Detect tool result errors
+        const contentBlocks = Array.isArray(msg.message.content)
+          ? msg.message.content
+          : [];
+        for (const block of contentBlocks) {
+          if (block.type === 'tool_result' && block.is_error) {
+            const errContent =
+              typeof block.content === 'string'
+                ? block.content
+                : Array.isArray(block.content)
+                ? block.content
+                    .filter((b: Record<string, unknown>) => b.type === 'text')
+                    .map((b: Record<string, unknown>) => b.text)
+                    .join('\n')
+                : JSON.stringify(block.content);
+            events.push({
+              id: makeId(`error_tool_${block.tool_use_id ?? lineIndex}`),
+              type: 'error',
+              sessionId,
+              project,
+              timestamp,
+              data: {
+                message: errContent,
+                source: 'tool_result',
+                toolUseId: block.tool_use_id,
+              },
+            });
+          }
+        }
+
         events.push({
           id: makeId('message_sent'),
           type: 'message_sent',
@@ -62,6 +93,22 @@ async function getEventsForSession(
               typeof msg.message.content === 'string'
                 ? msg.message.content
                 : JSON.stringify(msg.message.content),
+          },
+        });
+      }
+
+      // Detect top-level error entries
+      if (msg.type === 'error' || (msg.type === 'system' && msg.level === 'error')) {
+        events.push({
+          id: makeId('error_system'),
+          type: 'error',
+          sessionId,
+          project,
+          timestamp,
+          data: {
+            message: msg.message ?? msg.error ?? JSON.stringify(msg),
+            source: 'system',
+            stackTrace: msg.stack ?? undefined,
           },
         });
       }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { RefreshCw, GitPullRequest } from 'lucide-react';
+import { RefreshCw, GitPullRequest, TriangleAlert } from 'lucide-react';
 import { SessionCard } from '@/components/SessionCard';
 import { StatsBar } from '@/components/StatsBar';
 import { OrchestratorStatusBar } from '@/components/OrchestratorStatusBar';
@@ -39,6 +39,7 @@ interface OrchestratorStatus {
     activeSessions: number;
     totalTokens: number;
     totalCost: number;
+    errorCount?: number;
   };
 }
 
@@ -141,6 +142,26 @@ export default function Home() {
         {error && (
           <div className="bg-rose-950/40 border border-rose-800/40 text-rose-400 px-4 py-3 rounded-xl mb-5 text-sm">
             {error}
+          </div>
+        )}
+
+        {/* Error alert banner */}
+        {orchestratorStatus && (orchestratorStatus.orchestrator.errorCount ?? 0) > 0 && (
+          <div className="flex items-center justify-between gap-3 bg-rose-950/40 border border-rose-800/40 px-4 py-3 rounded-xl mb-5">
+            <div className="flex items-center gap-2 text-rose-300 text-sm">
+              <TriangleAlert size={15} className="text-rose-400 shrink-0" />
+              <span>
+                <span className="font-semibold">{orchestratorStatus.orchestrator.errorCount}</span>{' '}
+                {orchestratorStatus.orchestrator.errorCount === 1 ? 'error' : 'errors'} detected in
+                recent sessions
+              </span>
+            </div>
+            <Link
+              href="/errors"
+              className="text-xs font-medium text-rose-300 border border-rose-700/50 px-2.5 py-1 rounded-lg hover:bg-rose-900/40 transition-colors shrink-0"
+            >
+              View errors →
+            </Link>
           </div>
         )}
 
