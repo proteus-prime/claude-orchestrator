@@ -489,7 +489,8 @@ export function ActivityFeed({
             <LiveIndicator active={!error} />
             <button
               onClick={() => { fetchEvents(); }}
-              className="text-[10px] font-mono text-slate-500 hover:text-cyan-400 transition-colors border border-slate-700/50 hover:border-cyan-500/30 px-2 py-1 rounded-lg"
+              className="text-xs font-mono font-semibold text-emerald-400 hover:text-emerald-300 transition-all duration-150 border border-emerald-500/50 hover:border-emerald-400/70 bg-emerald-950/40 hover:bg-emerald-950/60 px-3.5 py-1.5 rounded-lg"
+              style={{ boxShadow: '0 0 8px #10b98140, 0 0 16px #10b98120' }}
             >
               REFRESH
             </button>
