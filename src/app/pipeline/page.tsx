@@ -125,6 +125,14 @@ function timeAgo(iso: string | null): string {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+function extractLinearIssue(project: string): { id: string; url: string } | null {
+  const match = project.match(/feature\/(\d+)\//);
+  if (!match) return null;
+  const num = parseInt(match[1], 10);
+  const id = `THE-${num}`;
+  return { id, url: `https://linear.app/theraai/issue/${id}` };
+}
+
 // ============================================================
 // Issue Card
 // ============================================================
@@ -197,14 +205,28 @@ function IssueCard({
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-slate-700/40">
-        <Link
-          href={`/session/${issue.sessionId}`}
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-0.5 text-xs text-cyan-400/80 hover:text-cyan-300 font-mono transition-colors"
-        >
-          <ChevronRight size={10} />
-          {issue.sessionId.slice(0, 8)}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/session/${issue.sessionId}`}
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-0.5 text-xs text-cyan-400/80 hover:text-cyan-300 font-mono transition-colors"
+          >
+            <ChevronRight size={10} />
+            {issue.sessionId.slice(0, 8)}
+          </Link>
+          {extractLinearIssue(issue.project) && (
+            <a
+              href={extractLinearIssue(issue.project)!.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-0.5 text-xs text-violet-400/80 hover:text-violet-300 transition-colors"
+            >
+              <ExternalLink size={9} />
+              {extractLinearIssue(issue.project)!.id}
+            </a>
+          )}
+        </div>
         <span className="text-[10px] text-slate-500 flex items-center gap-1">
           <Clock size={9} />
           {timeAgo(issue.detectedAt)}
@@ -264,16 +286,38 @@ function PRCard({
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-slate-700/40">
-        <a
-          href={pr.prUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1 text-xs text-cyan-400/80 hover:text-cyan-300 transition-colors"
-        >
-          <ExternalLink size={10} />
-          View PR
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href={pr.prUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1 text-xs text-cyan-400/80 hover:text-cyan-300 transition-colors"
+          >
+            <ExternalLink size={10} />
+            View PR
+          </a>
+          <Link
+            href={`/session/${pr.sessionId}`}
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-0.5 text-xs text-slate-400/80 hover:text-slate-300 font-mono transition-colors"
+          >
+            <ChevronRight size={10} />
+            Session
+          </Link>
+          {extractLinearIssue(pr.project) && (
+            <a
+              href={extractLinearIssue(pr.project)!.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-0.5 text-xs text-violet-400/80 hover:text-violet-300 transition-colors"
+            >
+              <ExternalLink size={9} />
+              {extractLinearIssue(pr.project)!.id}
+            </a>
+          )}
+        </div>
         {pr.createdAt && (
           <span className="text-[10px] text-slate-500 flex items-center gap-1">
             <Calendar size={9} />
